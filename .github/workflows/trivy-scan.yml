@@ -1,26 +1,37 @@
-name: Trivy Docker Image Scan
+name: CI Security & Code Scan
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  trivy-scan:
+  scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t trivy-demo:latest .
+    - name: Build Docker image
+      run: docker build -t trivy-demo:latest .
 
-      - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: trivy-demo:latest
-          severity: HIGH,CRITICAL
-          exit-code: 1
-          format: table
+    - name: Trivy Image Scan
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        image-ref: trivy-demo:latest
+        severity: HIGH,CRITICAL
+        exit-code: 1
+        format: table
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@v2
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: http://34.231.169.32:9000
+
+    - name: SonarQube Quality Gate
+      uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: http://34.231.169.32:9000
