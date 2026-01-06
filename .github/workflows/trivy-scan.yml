@@ -10,12 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1️⃣ Checkout source code
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # 2️⃣ Build Docker image
     - name: Build Docker image
       run: docker build -t trivy-demo:latest .
 
+    # 3️⃣ Trivy Docker Image Scan (Security Gate)
     - name: Trivy Image Scan
       uses: aquasecurity/trivy-action@0.28.0
       with:
@@ -24,12 +27,19 @@ jobs:
         exit-code: 1
         format: table
 
+    # 4️⃣ SonarQube Code Scan
     - name: SonarQube Scan
       uses: sonarsource/sonarqube-scan-action@v2
+      with:
+        args: >
+          -Dsonar.projectKey=trivy-docker-security
+          -Dsonar.projectName=trivy-docker-security
+          -Dsonar.sources=.
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: http://34.231.169.32:9000
 
+    # 5️⃣ SonarQube Quality Gate (Pipeline breaker)
     - name: SonarQube Quality Gate
       uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
       env:
